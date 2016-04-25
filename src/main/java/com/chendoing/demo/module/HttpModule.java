@@ -6,6 +6,7 @@ import dagger.Module;
 import dagger.Provides;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
 import javax.inject.Singleton;
@@ -27,6 +28,6 @@ public class HttpModule {
         ObjectMapper objectMapper = new ObjectMapper();
         // 设置输入时忽略在JSON字符串中存在但Java对象实际没有的属性
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        return new Retrofit.Builder().client(client).addConverterFactory(JacksonConverterFactory.create(objectMapper)).baseUrl(baseUrl).build();
+        return new Retrofit.Builder().client(client).addCallAdapterFactory(RxJavaCallAdapterFactory.create()).addConverterFactory(JacksonConverterFactory.create(objectMapper)).baseUrl(baseUrl).build();
     }
 }
