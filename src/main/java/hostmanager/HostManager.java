@@ -1,14 +1,16 @@
-package com.chendoing.demo;
+package hostmanager;
+
+import hostmanager.ui.MainForm;
 
 import java.awt.*;
 
-public class Demo {
+public class HostManager {
 
-    public static void main(String args[]) {
+    public static void main(String[] args){
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                MainForm form = new MainForm();
+                new MainForm();
             }
         });
     }

@@ -1,4 +1,4 @@
-package com.chendoing.demo.model;
+package hostmanager.model;
 
 @SuppressWarnings("unused")
 public class Repos {
