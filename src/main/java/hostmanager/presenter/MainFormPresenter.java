@@ -23,10 +23,6 @@ public class MainFormPresenter {
         this.helper = helper;
     }
 
-    public void onCreate() {
-        askForNewData();
-    }
-
     public void deleteHost(Host host) {
         try {
             helper.deleteHost(host);

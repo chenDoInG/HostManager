@@ -38,6 +38,10 @@ public class MainForm {
     public MainForm() {
         initUI();
         initPresent();
+        initButtonListener();
+    }
+
+    private void initButtonListener() {
         btn_save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -75,7 +79,7 @@ public class MainForm {
                             @Override
                             public void call(File file) {
                                 Host selectedHost = menu.getHostOnShow();
-                                if(selectedHost!=null) {
+                                if (selectedHost != null) {
                                     try {
                                         selectedHost.setContent(hostContent.getText());
                                         menu.changeSystemHost();
@@ -105,7 +109,8 @@ public class MainForm {
     }
 
     private void initPresent() {
-        presenter.onCreate();
+        presenter.askForNewData();
+
     }
 
     private void changeHostContent(String content) {
