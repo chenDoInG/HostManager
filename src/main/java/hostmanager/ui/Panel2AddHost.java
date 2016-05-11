@@ -2,11 +2,11 @@ package hostmanager.ui;
 
 import hostmanager.model.Host;
 import hostmanager.presenter.MainFormPresenter;
+import hostmanager.ui.button.RxButton;
 import org.apache.commons.lang3.StringUtils;
+import rx.functions.Action1;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class Panel2AddHost {
     private JPanel panel2AddHost;
@@ -35,16 +35,17 @@ public class Panel2AddHost {
     }
 
     private void initButtonListener() {
-        btn_save_local.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (StringUtils.isNotEmpty(localName.getText())) {
-                    presenter.saveHost(Host.local(localName.getText()));
-                } else {
-                    showMsg("方案名称不能为空");
-                }
-            }
-        });
+        RxButton.click(btn_save_local)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        if (StringUtils.isNotEmpty(localName.getText())) {
+                            presenter.saveHost(Host.local(localName.getText()));
+                        } else {
+                            showMsg("方案名称不能为空");
+                        }
+                    }
+                });
     }
 
     private void showMsg(String content) {

@@ -5,13 +5,12 @@ import hostmanager.enums.FileSystem;
 import hostmanager.model.Host;
 import hostmanager.module.MainFormModule;
 import hostmanager.presenter.MainFormPresenter;
+import hostmanager.ui.button.RxButton;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -42,62 +41,71 @@ public class MainForm {
     }
 
     private void initButtonListener() {
-        btn_save.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Host selectedHost = menu.getHostOnShow();
-                if (selectedHost != null) {
-                    selectedHost.setContent(hostContent.getText());
-                    if (!"online".equals(selectedHost.getType())) {
-                        presenter.saveHost(selectedHost);
-                    }
-                    else {
-                        showErrorMsg("暂不提供远程host保存功能");
-                    }
-                }
-            }
-        });
-        btn_add.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                panel2AddHost.show();
-            }
-        });
-        btn_del.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Host selectedHost = menu.getHostOnShow();
-                if (selectedHost != null) {
-                    menu.removeHost();
-                    tray.deleteTray(selectedHost.getName());
-                    presenter.deleteHost(selectedHost);
-                } else {
-                    showErrorMsg("您还没有选择任何host");
-                }
-            }
-        });
-        btn_active.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                FileSystem.os().getHostFile()
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(new Action1<File>() {
-                            @Override
-                            public void call(File file) {
-                                Host selectedHost = menu.getHostOnShow();
-                                if (selectedHost != null) {
-                                    try {
-                                        selectedHost.setContent(hostContent.getText());
-                                        menu.changeSystemHost();
-                                        FileSystem.os().changeHost(file, menu.getSystemHost().getContent());
-                                    } catch (IOException e1) {
-                                        showErrorMsg(e1.getMessage());
-                                    }
-                                }
+        RxButton.click(btn_save)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        Host selectedHost = menu.getHostOnShow();
+                        if (selectedHost != null) {
+                            selectedHost.setContent(hostContent.getText());
+                            if (!"online".equals(selectedHost.getType())) {
+                                presenter.saveHost(selectedHost);
+                            } else {
+                                showErrorMsg("暂不提供远程host保存功能");
                             }
-                        });
-            }
-        });
+                        }
+                    }
+                });
+        RxButton.click(btn_add)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        panel2AddHost.show();
+                    }
+                });
+
+        RxButton.click(btn_del)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        Host selectedHost = menu.getHostOnShow();
+                        if (selectedHost != null) {
+                            if (!"online".equals(selectedHost.getType())) {
+                                menu.removeHost();
+                                tray.deleteTray(selectedHost.getName());
+                                presenter.deleteHost(selectedHost);
+                            } else {
+                                showErrorMsg("暂不提供远程host删除功能");
+                            }
+
+                        } else {
+                            showErrorMsg("您还没有选择任何host");
+                        }
+                    }
+                });
+        RxButton.click(btn_active)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        FileSystem.os().getHostFile()
+                                .subscribeOn(Schedulers.io())
+                                .subscribe(new Action1<File>() {
+                                    @Override
+                                    public void call(File file) {
+                                        Host selectedHost = menu.getHostOnShow();
+                                        if (selectedHost != null) {
+                                            try {
+                                                selectedHost.setContent(hostContent.getText());
+                                                menu.changeSystemHost();
+                                                FileSystem.os().changeHost(file, menu.getSystemHost().getContent());
+                                            } catch (IOException e1) {
+                                                showErrorMsg(e1.getMessage());
+                                            }
+                                        }
+                                    }
+                                });
+                    }
+                });
     }
 
     private void createUIComponents() {
