@@ -39,9 +39,7 @@ public class Panel2AddHost {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (StringUtils.isNotEmpty(localName.getText())) {
-                    Host host = new Host(localName.getText());
-                    host.setType("local");
-                    presenter.saveHost(host);
+                    presenter.saveHost(Host.local(localName.getText()));
                 } else {
                     showMsg("方案名称不能为空");
                 }

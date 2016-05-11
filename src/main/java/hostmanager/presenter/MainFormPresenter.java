@@ -8,8 +8,10 @@ import hostmanager.ui.MainForm;
 import rx.Observable;
 import rx.Subscriber;
 import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
-import java.sql.SQLException;
+import java.util.List;
 
 public class MainFormPresenter {
 
@@ -24,96 +26,77 @@ public class MainFormPresenter {
     }
 
     public void deleteHost(Host host) {
-        try {
-            helper.deleteHost(host);
-        } catch (SQLException e) {
-            form.showErrorMsg(e.getMessage());
-        }
+        helper.deleteHost(host);
     }
 
     public void saveHost(Host host) {
-        switch (host.getType()) {
-            case "common":
-                try {
-                    helper.saveCommonHost(host);
-                } catch (SQLException e) {
-                    form.showErrorMsg(e.getMessage());
-                }
-                break;
-            case "online":
-                break;
-            default:
-                try {
-                    helper.saveLocalHost(host);
-                    form.updateHost("本地方案", host);
-                } catch (SQLException e) {
-                    form.showErrorMsg(e.getMessage());
-                }
-
-        }
+        helper.save(host);
+        form.updateHost(host);
     }
 
-    private Host createCommonHost() {
-        Host host = new Host("公共配置");
-        host.setType("common");
-        try {
-            helper.initCommonHost(host);
-        } catch (SQLException e) {
-            form.showErrorMsg(e.getMessage());
-        }
-        return host;
-    }
+    public Observable<Host> getOnlineHost() {
+        return menuService.getHosts()
+                .flatMap(new Func1<List<String>, Observable<String>>() {
 
-    private void initCommonHost() {
-        try {
-            helper.getCommonHost()
-                    .switchIfEmpty(Observable.create(new Observable.OnSubscribe<Host>() {
-                        @Override
-                        public void call(Subscriber<? super Host> subscriber) {
-                            subscriber.onNext(createCommonHost());
-                            subscriber.onCompleted();
-                        }
-                    }))
-                    .subscribe(new Action1<Host>() {
-                        @Override
-                        public void call(Host host) {
-                            form.updateHost(host);
-                        }
-                    }, new Action1<Throwable>() {
-                        @Override
-                        public void call(Throwable throwable) {
-                            form.showErrorMsg(throwable.getMessage());
-                        }
-                    });
-        } catch (SQLException e) {
-            form.showErrorMsg(e.getMessage());
-        }
-    }
-
-    private void initLocalHost() {
-        try {
-            helper.getLocalHosts()
-                    .subscribe(new Action1<Host>() {
-                        @Override
-                        public void call(Host host) {
-                            form.updateHost("本地方案", host);
-                        }
-                    });
-        } catch (SQLException e) {
-            form.showErrorMsg(e.getMessage());
-        }
-
+                    @Override
+                    public Observable<String> call(final List<String> hostNames) {
+                        return Observable.create(new Observable.OnSubscribe<String>() {
+                            @Override
+                            public void call(Subscriber<? super String> subscriber) {
+                                for (String name : hostNames) {
+                                    subscriber.onNext(name);
+                                }
+                                subscriber.onCompleted();
+                            }
+                        });
+                    }
+                })
+                .flatMap(new Func1<String, Observable<Host>>() {
+                    @Override
+                    public Observable<Host> call(final String hostName) {
+                        return Observable.create(new Observable.OnSubscribe<Host>() {
+                            @Override
+                            public void call(Subscriber<? super Host> subscriber) {
+                                final Host online = Host.online(hostName);
+                                menuService.getHost(hostName)
+                                        .subscribe(new Action1<String>() {
+                                            @Override
+                                            public void call(String hostContent) {
+                                                online.setContent(hostContent);
+                                            }
+                                        });
+                                subscriber.onNext(online);
+                                subscriber.onCompleted();
+                            }
+                        });
+                    }
+                })
+                .filter(new Func1<Host, Boolean>() {
+                    @Override
+                    public Boolean call(Host host) {
+                        return !"# hosts 不存在或没有生成!".equals(host.getContent());
+                    }
+                });
     }
 
     public void askForNewData() {
-        initCommonHost();
-        FileSystem.os().getHost()
-                .subscribe(new Action1<String>() {
+        helper.getCommonHost()
+                .switchIfEmpty(Observable.create(new Observable.OnSubscribe<Host>() {
                     @Override
-                    public void call(String s) {
-                        Host currentHost = new Host("当前系统host");
-                        currentHost.setContent(s);
-                        form.updateHost(currentHost);
+                    public void call(Subscriber<? super Host> subscriber) {
+                        helper.save(Host.common());
+                        subscriber.onNext(Host.common());
+                        subscriber.onCompleted();
+                    }
+                }))
+                .concatWith(FileSystem.os().getHost())
+                .concatWith(helper.getLocalHosts())
+                .concatWith(getOnlineHost())
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Action1<Host>() {
+                    @Override
+                    public void call(Host host) {
+                        form.updateHost(host);
                     }
                 }, new Action1<Throwable>() {
                     @Override
@@ -122,36 +105,7 @@ public class MainFormPresenter {
                     }
                 });
 
-        initLocalHost();
-//        menuService.getHosts()
-//                .subscribeOn(Schedulers.io())
-//                .flatMap(new Func1<List<Repos>, Observable<List<String>>>() {
-//                    @Override
-//                    public Observable<List<String>> call(List<Repos> reposes) {
-//                        final List<String> hostNames = new ArrayList<>();
-//                        for (Repos r : reposes) {
-//                            hostNames.add(r.getName());
-//                        }
-//                        return Observable.create(new Observable.OnSubscribe<List<String>>() {
-//                            @Override
-//                            public void call(Subscriber<? super List<String>> subscriber) {
-//                                subscriber.onNext(hostNames);
-//                                subscriber.onCompleted();
-//                            }
-//                        });
-//                    }
-//                })
-//                .subscribe(new Action1<List<String>>() {
-//                    @Override
-//                    public void call(List<String> hostNames) {
-//                        form.updateHosts("在线方案", hostNames);
-//                    }
-//                }, new Action1<Throwable>() {
-//                    @Override
-//                    public void call(Throwable throwable) {
-//                        throwable.printStackTrace();
-//                    }
-//                });
+        getOnlineHost();
     }
 
 }

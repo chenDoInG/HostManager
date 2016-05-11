@@ -6,6 +6,7 @@ import hostmanager.model.Host;
 import hostmanager.module.MainFormModule;
 import hostmanager.presenter.MainFormPresenter;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -13,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 public class MainForm {
     private JFrame frame;
@@ -48,7 +48,12 @@ public class MainForm {
                 Host selectedHost = menu.getHostOnShow();
                 if (selectedHost != null) {
                     selectedHost.setContent(hostContent.getText());
-                    presenter.saveHost(selectedHost);
+                    if (!"online".equals(selectedHost.getType())) {
+                        presenter.saveHost(selectedHost);
+                    }
+                    else {
+                        showErrorMsg("暂不提供远程host保存功能");
+                    }
                 }
             }
         });
@@ -75,6 +80,7 @@ public class MainForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 FileSystem.os().getHostFile()
+                        .subscribeOn(Schedulers.io())
                         .subscribe(new Action1<File>() {
                             @Override
                             public void call(File file) {
@@ -132,21 +138,6 @@ public class MainForm {
         tray.updateTray(host.getName());
     }
 
-    public void updateHost(String host) {
-        menu.updateHost(host);
-        tray.updateTray(host);
-    }
-
-    public void updateHost(String parentName, Host host) {
-        menu.updateHost(parentName, host);
-        tray.updateTray(host.getName());
-    }
-
-    public void updateHosts(String menuName, List<String> hosts) {
-        menu.updateHosts(menuName, hosts);
-        tray.updateTrays(hosts);
-    }
-
     public void showWindow() {
         frame.setExtendedState(JFrame.NORMAL);
     }
@@ -155,7 +146,4 @@ public class MainForm {
         JOptionPane.showMessageDialog(frame, errorMsg);
     }
 
-    public String showPasswordDialog() {
-        return JOptionPane.showInputDialog(frame, "请输入密码:");
-    }
 }

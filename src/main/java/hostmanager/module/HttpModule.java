@@ -1,7 +1,5 @@
 package hostmanager.module;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
 import dagger.Module;
 import dagger.Provides;
@@ -15,8 +13,7 @@ import javax.inject.Singleton;
 @Module
 public class HttpModule {
 
-    //    private final static String baseUrl = "http://10.10.10.240:7257/";
-    private final static String baseUrl = "https://api.github.com";
+    private final static String baseUrl = "http://127.0.0.1/";
 
     @Singleton
     @Provides
@@ -28,14 +25,10 @@ public class HttpModule {
     @Singleton
     @Provides
     public Retrofit provideRetrofit(OkHttpClient client) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        // 设置输入时忽略在JSON字符串中存在但Java对象实际没有的属性
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         return new Retrofit.Builder()
                 .client(client)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().serializeNulls().generateNonExecutableJson().create()))
-//                .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().serializeNulls().generateNonExecutableJson().create()))
                 .baseUrl(baseUrl).build();
     }
 }

@@ -39,7 +39,7 @@ public class Menu extends JTree {
 
     public void changeSystemHost() {
         getSystemHost().setContent(nodes.get("公共配置").getContent() + System.getProperty("line.separator") +
-                        hostOnShow.getContent());
+                hostOnShow.getContent());
     }
 
     public Host getSystemHost() {
@@ -87,15 +87,21 @@ public class Menu extends JTree {
         expandTree();
     }
 
-    public void updateHost(String hostName) {
-        updateHost(new Host(hostName));
-    }
-
     public void updateHost(Host host) {
-        DefaultTreeModel model = (DefaultTreeModel) this.getModel();
-        model.insertNodeInto(host, (MutableTreeNode) model.getRoot(), ((MutableTreeNode) model.getRoot()).getChildCount());
-        expandTree();
-        nodes.put(host.getName(), host);
+
+        switch (host.getType()) {
+            case "online":
+                updateHost("在线方案", host);
+                break;
+            case "local":
+                updateHost("本地方案", host);
+                break;
+            default:
+                DefaultTreeModel model = (DefaultTreeModel) this.getModel();
+                model.insertNodeInto(host, (MutableTreeNode) model.getRoot(), ((MutableTreeNode) model.getRoot()).getChildCount());
+                expandTree();
+                nodes.put(host.getName(), host);
+        }
     }
 
     public void expandTree() {

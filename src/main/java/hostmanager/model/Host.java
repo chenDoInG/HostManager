@@ -11,7 +11,7 @@ public class Host extends DefaultMutableTreeNode {
 
     private DateTime lastUpdateTime;
 
-    private String type;
+    private String type = "";
 
     public Host() {
     }
@@ -50,6 +50,28 @@ public class Host extends DefaultMutableTreeNode {
 
     public void setLastUpdateTime(DateTime lastUpdateTime) {
         this.lastUpdateTime = lastUpdateTime;
+    }
+
+    public static Host systemHost() {
+        return new Host("当前系统host");
+    }
+
+    public static Host common() {
+        Host common = new Host("公共配置");
+        common.setType("common");
+        return common;
+    }
+
+    public static Host local(String name) {
+        Host host = new Host(name);
+        host.setType("local");
+        return host;
+    }
+
+    public static Host online(String name) {
+        Host host = new Host(name);
+        host.setType("online");
+        return host;
     }
 
     @Override

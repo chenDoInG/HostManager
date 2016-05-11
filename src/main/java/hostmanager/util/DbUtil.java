@@ -2,6 +2,7 @@ package hostmanager.util;
 
 import rx.Observable;
 import rx.Subscriber;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 import java.lang.reflect.Field;
@@ -25,39 +26,76 @@ public class DbUtil {
         }
     }
 
-    public void execute(String sql) throws SQLException {
-        statement.execute(sql);
+    public void execute(final String sql) {
+        Observable.just(statement)
+                .flatMap(new Func1<Statement, Observable<Void>>() {
+                    @Override
+                    public Observable<Void> call(final Statement statement) {
+                        return Observable.create(new Observable.OnSubscribe<Void>() {
+                            @Override
+                            public void call(Subscriber<? super Void> subscriber) {
+                                try {
+                                    statement.execute(sql);
+                                } catch (SQLException e) {
+                                    subscriber.onError(e);
+                                }
+                                subscriber.onCompleted();
+                            }
+                        });
+                    }
+                }).subscribeOn(Schedulers.io())
+                .subscribe();
     }
 
-    public <T> Observable<T> execute(final Class<T> type, final String sql) throws SQLException {
-        final ResultSet resultSet = statement.executeQuery(sql);
-
-        return Observable.create(new Observable.OnSubscribe<T>() {
-            @Override
-            public void call(Subscriber<? super T> subscriber) {
-                try {
-                    while (resultSet.next()) {
-                        try {
-                            T clz = type.newInstance();
-                            for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
+    public <T> Observable<T> execute(final Class<T> type, final String sql) {
+        return Observable.just(statement)
+                .flatMap(new Func1<Statement, Observable<ResultSet>>() {
+                    @Override
+                    public Observable<ResultSet> call(final Statement statement) {
+                        return Observable.create(new Observable.OnSubscribe<ResultSet>() {
+                            @Override
+                            public void call(Subscriber<? super ResultSet> subscriber) {
                                 try {
-                                    Field field = type.getDeclaredField(resultSet.getMetaData().getColumnName(i));
-                                    field.setAccessible(true);
-                                    field.set(clz, resultSet.getString(i));
-                                } catch (NoSuchFieldException ignore) {
+                                    subscriber.onNext(statement.executeQuery(sql));
+                                } catch (SQLException e) {
+                                    subscriber.onError(e);
                                 }
+                                subscriber.onCompleted();
                             }
-                            subscriber.onNext(clz);
-                        } catch (InstantiationException | IllegalAccessException e) {
-                            subscriber.onError(e);
-                        }
+                        });
                     }
-                } catch (SQLException e) {
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        }).subscribeOn(Schedulers.io());
+                })
+                .flatMap(new Func1<ResultSet, Observable<T>>() {
+                    @Override
+                    public Observable<T> call(final ResultSet resultSet) {
+                        return Observable.create(new Observable.OnSubscribe<T>() {
+                            @Override
+                            public void call(Subscriber<? super T> subscriber) {
+                                try {
+                                    while (resultSet.next()) {
+                                        try {
+                                            T clz = type.newInstance();
+                                            for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                                                try {
+                                                    Field field = type.getDeclaredField(resultSet.getMetaData().getColumnName(i));
+                                                    field.setAccessible(true);
+                                                    field.set(clz, resultSet.getString(i));
+                                                } catch (NoSuchFieldException ignore) {
+                                                }
+                                            }
+                                            subscriber.onNext(clz);
+                                        } catch (InstantiationException | IllegalAccessException e) {
+                                            subscriber.onError(e);
+                                        }
+                                    }
+                                } catch (SQLException e) {
+                                    subscriber.onError(e);
+                                }
+                                subscriber.onCompleted();
+                            }
+                        });
+                    }
+                });
     }
 
     public void close() {

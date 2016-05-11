@@ -4,13 +4,12 @@ import hostmanager.component.DaggerHostHelperComponent;
 import hostmanager.model.Host;
 import hostmanager.util.DbUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import rx.Observable;
 import rx.Subscriber;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
-import java.sql.SQLException;
 
 public class HostHelper {
 
@@ -21,74 +20,51 @@ public class HostHelper {
         DaggerHostHelperComponent.builder().build().inject(this);
     }
 
-    public Observable<Host> getHost(Host host) throws SQLException {
+    public Observable<Host> getHost(Host host) {
         return db.execute(Host.class, new Condition().select().where().name(host.getName()).build());
     }
 
-    public void deleteHost(Host host) throws SQLException {
+    public void deleteHost(Host host) {
         getHost(host)
                 .subscribe(new Action1<Host>() {
                     @Override
                     public void call(Host host) {
-                        try {
-                            db.execute(new Condition().delete().where().name(host.getName()).build());
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                        db.execute(new Condition().delete().where().name(host.getName()).build());
 
                     }
                 });
     }
 
-    public Observable<Host> getCommonHost() throws SQLException {
+    public Observable<Host> getCommonHost() {
         return db.execute(Host.class, new Condition().select().where().common().build());
     }
 
-    public Observable<Host> getLocalHosts() throws SQLException {
+    public Observable<Host> getLocalHosts() {
         return db.execute(Host.class, new Condition().select().where().local().build());
     }
 
-    public void saveLocalHost(final Host host) throws SQLException {
-        db.execute(Host.class, new Condition().select().where().name(host.getName()).and().local().build())
+
+    public void save(final Host host) {
+        db.execute(Host.class, new Condition().select().where().name(host.getName()).and().type(host.getType()).build())
                 .switchIfEmpty(Observable.create(new Observable.OnSubscribe<Host>() {
                     @Override
                     public void call(Subscriber<? super Host> subscriber) {
-                        try {
-                            db.execute(new Condition().insertLocal(host).build());
-                            subscriber.onNext(host);
-                        } catch (SQLException e) {
-                            subscriber.onError(e);
-                        }
+                        db.execute(new Condition().insert(host).build());
+                        subscriber.onNext(host);
                         subscriber.onCompleted();
                     }
                 }))
+                .subscribeOn(Schedulers.io())
                 .subscribe(new Action1<Host>() {
                     @Override
-                    public void call(Host host1) {
-                        try {
-                            db.execute(new Condition()
-                                    .update().set()
-                                    .content(StringUtils.isEmpty(host.getContent()) ? "" : host.getContent())
-                                    .where()
-                                    .name(host1.getName()).build());
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                    public void call(Host usingHost) {
+                        db.execute(new Condition()
+                                .update().set()
+                                .content(StringUtils.isEmpty(host.getContent()) ? "" : host.getContent())
+                                .where()
+                                .name(usingHost.getName()).build());
                     }
                 });
-
-    }
-
-    public void saveCommonHost(Host host) throws SQLException {
-        if (host.getLastUpdateTime() == null || DateTime.now().getMillis() - host.getLastUpdateTime().getMillis() > 100) {
-            String sql = new Condition().update().set().name(host.getName()).separator().content(host.getContent()).where().common().build();
-            db.execute(sql);
-            host.setLastUpdateTime(DateTime.now());
-        }
-    }
-
-    public void initCommonHost(Host host) throws SQLException {
-        db.execute(new Condition().insertCommon(host).build());
     }
 
     public static class Condition {
@@ -107,6 +83,11 @@ public class HostHelper {
 
         private static StringBuilder sql = new StringBuilder();
 
+        public Condition type(String type) {
+            sql.append("type = \"").append(type).append("\"");
+            return this;
+        }
+
         public Condition delete() {
             sql.append(DELETE);
             return this;
@@ -114,6 +95,15 @@ public class HostHelper {
 
         public Condition separator() {
             sql.append(SEPERATOR);
+            return this;
+        }
+
+        public Condition insert(Host host) {
+            sql.append(INSERT)
+                    .append("(name,content,type) VALUES")
+                    .append("(\"").append(host.getName()).append("\",")
+                    .append("\"").append(StringUtils.isEmpty(host.getContent()) ? "" : host.getContent()).append("\",")
+                    .append("\"").append(StringUtils.isEmpty(host.getType()) ? "" : host.getType()).append("\")");
             return this;
         }
 

@@ -71,4 +71,35 @@ public class DbUtilTest {
         });
     }
 
+    @Test
+    public void rx() {
+        Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                subscriber.onNext("1");
+                subscriber.onNext("2");
+                if (1==1)
+                    throw new NullPointerException("测试异常");
+                subscriber.onCompleted();
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("结束");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        System.out.println(e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        System.out.println(s);
+                    }
+                });
+    }
+
 }

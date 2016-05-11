@@ -1,12 +1,12 @@
 package hostmanager.enums;
 
+import hostmanager.model.Host;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import rx.Observable;
 import rx.Subscriber;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 import javax.swing.*;
 import java.io.File;
@@ -17,7 +17,6 @@ public enum FileSystem {
         @Override
         public Observable<File> getHostFile() {
             return Observable.just(File.listRoots())
-                    .subscribeOn(Schedulers.io())
                     .flatMap(new Func1<File[], Observable<File>>() {
                         @Override
                         public Observable<File> call(final File[] files) {
@@ -56,11 +55,6 @@ public enum FileSystem {
         }
 
         @Override
-        public Observable<String> getHost() {
-            return getHostFile().flatMap(transform());
-        }
-
-        @Override
         void initPassword() {
             //do nothing in windows system;
         }
@@ -75,13 +69,7 @@ public enum FileSystem {
     Mac {
         @Override
         public Observable<File> getHostFile() {
-            return Observable.just(new File(MAC_HOST))
-                    .subscribeOn(Schedulers.io());
-        }
-
-        @Override
-        public Observable<String> getHost() {
-            return getHostFile().flatMap(transform());
+            return Observable.just(new File(MAC_HOST));
         }
 
         @Override
@@ -107,15 +95,17 @@ public enum FileSystem {
 
     };
 
-    private static Func1<File, Observable<String>> transform() {
-        return new Func1<File, Observable<String>>() {
+    private static Func1<File, Observable<Host>> transform() {
+        return new Func1<File, Observable<Host>>() {
             @Override
-            public Observable<String> call(final File file) {
-                return Observable.create(new Observable.OnSubscribe<String>() {
+            public Observable<Host> call(final File file) {
+                return Observable.create(new Observable.OnSubscribe<Host>() {
                     @Override
-                    public void call(Subscriber<? super String> subscriber) {
+                    public void call(Subscriber<? super Host> subscriber) {
                         try {
-                            subscriber.onNext(FileUtils.readFileToString(file, Charsets.toCharset("UTF-8")));
+                            Host host = Host.systemHost();
+                            host.setContent(FileUtils.readFileToString(file, Charsets.toCharset("UTF-8")));
+                            subscriber.onNext(host);
                         } catch (IOException e) {
                             subscriber.onError(e);
                         }
@@ -131,7 +121,9 @@ public enum FileSystem {
 
     public abstract Observable<File> getHostFile();
 
-    public abstract Observable<String> getHost();
+    public Observable<Host> getHost() {
+        return getHostFile().flatMap(transform());
+    }
 
     protected String pwd;
 
