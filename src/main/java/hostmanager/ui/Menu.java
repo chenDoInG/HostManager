@@ -8,7 +8,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Menu extends JTree {
@@ -74,17 +73,6 @@ public class Menu extends JTree {
             nodes.put(host.getName(), host);
             expandTree();
         }
-    }
-
-    public void updateHosts(String parentHostName, List<String> hostNames) {
-        DefaultTreeModel model = (DefaultTreeModel) this.getModel();
-        Host parent = getNodeByHostName(parentHostName);
-        for (String host : hostNames) {
-            Host child = new Host(host);
-            model.insertNodeInto(child, parent, parent.getChildCount());
-            nodes.put(child.getName(), child);
-        }
-        expandTree();
     }
 
     public void updateHost(Host host) {
