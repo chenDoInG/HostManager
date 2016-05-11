@@ -104,8 +104,6 @@ public class MainFormPresenter {
                         form.showErrorMsg(throwable.getMessage());
                     }
                 });
-
-        getOnlineHost();
     }
 
 }
