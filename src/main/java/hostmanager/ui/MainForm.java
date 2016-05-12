@@ -2,6 +2,7 @@ package hostmanager.ui;
 
 import hostmanager.component.DaggerMainFormComponent;
 import hostmanager.enums.FileSystem;
+import hostmanager.exception.InCorrectPasswordException;
 import hostmanager.model.Host;
 import hostmanager.module.MainFormModule;
 import hostmanager.presenter.MainFormPresenter;
@@ -94,10 +95,17 @@ public class MainForm {
                                     public void call(File file) {
                                         Host selectedHost = menu.getHostOnShow();
                                         if (selectedHost != null) {
+                                            String expectContent = menu.getCommonContent() + hostContent.getText();
                                             try {
-                                                selectedHost.setContent(hostContent.getText());
-                                                menu.changeSystemHost();
-                                                FileSystem.os().changeHost(file, menu.getSystemHost().getContent());
+                                                try {
+                                                    FileSystem.os().changeHost(file, expectContent);
+                                                    selectedHost.setContent(hostContent.getText());
+                                                    presenter.saveHost(selectedHost);
+                                                    menu.changeSystemHost(expectContent);
+                                                } catch (InCorrectPasswordException e) {
+                                                    JOptionPane.showMessageDialog(frame, "您输入的密码错误,请重新尝试", "密码提示", JOptionPane.ERROR_MESSAGE);
+                                                }
+
                                             } catch (IOException e1) {
                                                 showErrorMsg(e1.getMessage());
                                             }
@@ -124,11 +132,11 @@ public class MainForm {
 
     private void initPresent() {
         presenter.askForNewData();
-
     }
 
     private void changeHostContent(String content) {
         hostContent.setText(content);
+        hostContent.setCaretPosition(0);
     }
 
     public void onMenuChange(Host selectedNode) {

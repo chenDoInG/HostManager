@@ -36,13 +36,15 @@ public class Menu extends JTree {
         });
     }
 
-    public void changeSystemHost() {
-        getSystemHost().setContent(nodes.get("公共配置").getContent() + System.getProperty("line.separator") +
-                hostOnShow.getContent());
+    public void changeSystemHost(String using) {
+        nodes.get("当前系统host").setContent(using);
     }
 
-    public Host getSystemHost() {
-        return nodes.get("当前系统host");
+    public String getCommonContent() {
+        return "--------公共配置开始--------" + System.getProperty("line.separator") +
+                nodes.get("公共配置").getContent() +
+                "--------公共配置结束--------" + System.getProperty("line.separator") +
+                System.getProperty("line.separator");
     }
 
     public Host getHostOnShow() {
@@ -85,10 +87,14 @@ public class Menu extends JTree {
                 updateHost("本地方案", host);
                 break;
             default:
-                DefaultTreeModel model = (DefaultTreeModel) this.getModel();
-                model.insertNodeInto(host, (MutableTreeNode) model.getRoot(), ((MutableTreeNode) model.getRoot()).getChildCount());
-                expandTree();
-                nodes.put(host.getName(), host);
+                if (!nodes.containsKey(host.getName())) {
+                    DefaultTreeModel model = (DefaultTreeModel) this.getModel();
+                    model.insertNodeInto(host, (MutableTreeNode) model.getRoot(), ((MutableTreeNode) model.getRoot()).getChildCount());
+                    expandTree();
+                    nodes.put(host.getName(), host);
+                } else {
+                    nodes.put(host.getName(), host);
+                }
         }
     }
 

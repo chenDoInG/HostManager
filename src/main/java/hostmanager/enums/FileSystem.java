@@ -1,5 +1,6 @@
 package hostmanager.enums;
 
+import hostmanager.exception.InCorrectPasswordException;
 import hostmanager.model.Host;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -127,13 +128,13 @@ public enum FileSystem {
 
     protected String pwd;
 
-    public void changeHost(final File file, final String content) throws IOException {
+    public void changeHost(final File file, final String content) throws IOException, InCorrectPasswordException {
         initPassword();
         if (executeCommand("/bin/bash", "-c", "echo \"" + pwd + "\"| sudo -S chmod 777 " + MAC_HOST)) {
             FileUtils.writeStringToFile(file, content, Charsets.toCharset("UTF-8"));
         } else {
-            JOptionPane.showMessageDialog(null, "您输入的密码错误,请重新尝试", "密码提示", JOptionPane.ERROR_MESSAGE);
             pwd = "";
+            throw new InCorrectPasswordException();
         }
     }
 
