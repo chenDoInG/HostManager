@@ -30,7 +30,6 @@ public class HostHelper {
                     @Override
                     public void call(Host host) {
                         db.execute(new Condition().delete().where().name(host.getName()).build());
-
                     }
                 });
     }

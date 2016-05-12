@@ -1,12 +1,13 @@
 package hostmanager.ui;
 
+import hostmanager.presenter.MainFormPresenter;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Tray {
@@ -14,11 +15,11 @@ public class Tray {
     private SystemTray tray = SystemTray.getSystemTray();
     private TrayIcon trayIcon = getTrayIcon();
     private Map<String, MenuItem> menuItems = new HashMap<>();
-    private MainForm form;
+    private MainFormPresenter presenter;
     private MenuItem selectedItem;
 
-    public Tray(MainForm form) {
-        this.form = form;
+    public Tray(MainFormPresenter presenter) {
+        this.presenter = presenter;
         initSystemTray();
         initOperationTray();
     }
@@ -60,17 +61,9 @@ public class Tray {
                 }
                 item.setLabel(selectedName);
                 selectedItem = item;
-                form.onTrayChange(hostName);
-                form.showWindow();
+                presenter.onTrayChange(hostName);
             }
         }
-    }
-
-    public void updateTrays(List<String> hostNames) {
-        for (String hostName : hostNames) {
-            addMenuItem(hostName);
-        }
-        addSeparator();
     }
 
     public void updateTray(String hostName) {
@@ -117,7 +110,7 @@ public class Tray {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                form.showWindow();
+                presenter.showWindow();
             }
 
             @Override

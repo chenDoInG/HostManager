@@ -1,6 +1,5 @@
 package hostmanager.ui;
 
-import hostmanager.model.Host;
 import hostmanager.presenter.MainFormPresenter;
 import hostmanager.ui.button.RxButton;
 import org.apache.commons.lang3.StringUtils;
@@ -12,9 +11,6 @@ public class Panel2AddHost {
     private JPanel panel2AddHost;
     private JButton btn_save_local;
     private JTextField localName;
-    private JButton btn_save_remote;
-    private JTextField remoteName;
-    private JTextField remoteHost;
     private JFrame frame;
 
     MainFormPresenter presenter;
@@ -40,7 +36,8 @@ public class Panel2AddHost {
                     @Override
                     public void call(Void aVoid) {
                         if (StringUtils.isNotEmpty(localName.getText())) {
-                            presenter.saveHost(Host.local(localName.getText()));
+                            presenter.addHost(localName.getText());
+                            frame.setVisible(false);
                         } else {
                             showMsg("方案名称不能为空");
                         }

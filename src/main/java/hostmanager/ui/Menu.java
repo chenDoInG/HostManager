@@ -1,6 +1,7 @@
 package hostmanager.ui;
 
 import hostmanager.model.Host;
+import hostmanager.presenter.MainFormPresenter;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -13,13 +14,13 @@ import java.util.Map;
 public class Menu extends JTree {
 
     private Map<String, Host> nodes = new HashMap<>();
-    private MainForm form;
+    private MainFormPresenter presenter;
 
     private Host hostOnShow;
 
-    public Menu(final MainForm form, Host node) {
+    public Menu(final MainFormPresenter presenter, Host node) {
         super(node);
-        this.form = form;
+        this.presenter = presenter;
         TreeSelectionModel model = getSelectionModel();
         model.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setSelectionModel(model);
@@ -29,7 +30,7 @@ public class Menu extends JTree {
             public void valueChanged(TreeSelectionEvent e) {
                 Host selectedNode = (Host) getLastSelectedPathComponent();
                 if (selectedNode != null && selectedNode.isLeaf()) {
-                    form.onMenuChange(selectedNode);
+                    presenter.onMenuChange(selectedNode);
                     hostOnShow = selectedNode;
                 }
             }
@@ -61,7 +62,7 @@ public class Menu extends JTree {
                     model.removeNodeFromParent(parent);
                 }
             } else {
-                form.showErrorMsg("不能删除公共配置和当前系统host文件");
+                presenter.showErrorMsg("不能删除公共配置和当前系统host文件");
             }
         }
         updateUI();
@@ -91,10 +92,8 @@ public class Menu extends JTree {
                     DefaultTreeModel model = (DefaultTreeModel) this.getModel();
                     model.insertNodeInto(host, (MutableTreeNode) model.getRoot(), ((MutableTreeNode) model.getRoot()).getChildCount());
                     expandTree();
-                    nodes.put(host.getName(), host);
-                } else {
-                    nodes.put(host.getName(), host);
                 }
+                nodes.put(host.getName(), host);
         }
     }
 

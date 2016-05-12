@@ -55,18 +55,6 @@
               <text value="新增"/>
             </properties>
           </component>
-          <component id="f1fb1" class="javax.swing.JButton" binding="btn_refresh">
-            <constraints/>
-            <properties>
-              <text value="刷新"/>
-            </properties>
-          </component>
-          <component id="eff68" class="javax.swing.JButton" binding="btn_modify">
-            <constraints/>
-            <properties>
-              <text value="修改"/>
-            </properties>
-          </component>
           <component id="c68c9" class="javax.swing.JButton" binding="btn_del">
             <constraints/>
             <properties>

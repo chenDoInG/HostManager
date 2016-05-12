@@ -26,13 +26,17 @@ public class MainFormModule {
     @Singleton
     @Provides
     Panel2AddHost providePanel(MainFormPresenter presenter) {
-        return new Panel2AddHost(presenter);
+        Panel2AddHost panel2AddHost = new Panel2AddHost(presenter);
+        presenter.injectPanel(panel2AddHost);
+        return panel2AddHost;
     }
 
     @Singleton
     @Provides
-    Menu provideMenu() {
-        return new Menu(form, new Host("hosts"));
+    Menu provideMenu(MainFormPresenter presenter) {
+        Menu menu = new Menu(presenter, new Host("hosts"));
+        presenter.injectMenu(menu);
+        return menu;
     }
 
     @Singleton
@@ -55,7 +59,9 @@ public class MainFormModule {
 
     @Singleton
     @Provides
-    Tray provideSystemTray() {
-        return new Tray(form);
+    Tray provideSystemTray(MainFormPresenter presenter) {
+        Tray tray = new Tray(presenter);
+        presenter.injectTray(tray);
+        return tray;
     }
 }

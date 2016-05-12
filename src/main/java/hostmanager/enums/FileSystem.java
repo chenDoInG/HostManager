@@ -77,7 +77,7 @@ public enum FileSystem {
         void initPassword() {
             if (StringUtils.isEmpty(pwd)) {
                 JPasswordField passwordField = new JPasswordField();
-                JOptionPane.showMessageDialog(null, passwordField, "请输入密码", JOptionPane.PLAIN_MESSAGE);
+                JOptionPane.showMessageDialog(null, passwordField, "需要您的密码来变更host", JOptionPane.PLAIN_MESSAGE);
                 pwd = String.valueOf(passwordField.getPassword());
             }
         }
