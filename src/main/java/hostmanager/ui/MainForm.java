@@ -1,7 +1,6 @@
 package hostmanager.ui;
 
 import hostmanager.component.DaggerMainFormComponent;
-import hostmanager.model.Host;
 import hostmanager.module.MainFormModule;
 import hostmanager.presenter.MainFormPresenter;
 import hostmanager.ui.button.RxButton;
@@ -91,11 +90,6 @@ public class MainForm {
 
     public String getContent(){
         return hostContent.getText();
-    }
-
-    public void updateHost(Host host) {
-        menu.updateHost(host);
-        tray.updateTray(host.getName());
     }
 
     public void showWindow() {

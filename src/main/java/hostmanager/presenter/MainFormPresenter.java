@@ -64,7 +64,8 @@ public class MainFormPresenter {
                 .subscribe(new Action1<Host>() {
                     @Override
                     public void call(Host host) {
-                        form.updateHost(host);
+                        menu.updateHost(host);
+                        tray.updateTray(host.getName());
                     }
                 }, new Action1<Throwable>() {
                     @Override
