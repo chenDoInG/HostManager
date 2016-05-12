@@ -36,6 +36,7 @@ public class Tray {
         quit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                presenter.destroy();
                 System.exit(0);
             }
         });

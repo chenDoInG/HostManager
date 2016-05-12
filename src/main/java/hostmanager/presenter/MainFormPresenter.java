@@ -48,6 +48,7 @@ public class MainFormPresenter {
     }
 
     public void askForNewData() {
+
         helper.getCommonHost()
                 .switchIfEmpty(Observable.create(new Observable.OnSubscribe<Host>() {
                     @Override
@@ -60,25 +61,31 @@ public class MainFormPresenter {
                 .concatWith(FileSystem.os().getHost())
                 .concatWith(helper.getLocalHosts())
                 .concatWith(getOnlineHost())
-                .subscribeOn(Schedulers.io())
-                .subscribe(new Action1<Host>() {
-                    @Override
-                    public void call(Host host) {
-                        menu.updateHost(host);
-                        tray.updateTray(host.getName());
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        form.showErrorMsg(throwable.getMessage());
-                    }
-                });
+                .subscribeOn(Schedulers.newThread())
+                .subscribe(updateHostOnSubscriber);
     }
+
+    private Subscriber<Host> updateHostOnSubscriber = new Subscriber<Host>() {
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            form.showErrorMsg(e.getMessage());
+        }
+
+        @Override
+        public void onNext(Host host) {
+            menu.updateHost(host);
+            tray.updateTray(host.getName());
+        }
+    };
 
     private Observable<Host> getOnlineHost() {
         return menuService.getHosts()
                 .flatMap(new Func1<List<String>, Observable<String>>() {
-
                     @Override
                     public Observable<String> call(final List<String> hostNames) {
                         return Observable.create(new Observable.OnSubscribe<String>() {
@@ -139,31 +146,43 @@ public class MainFormPresenter {
     public void activeHost() {
         FileSystem.os().getHostFile()
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Action1<File>() {
-                    @Override
-                    public void call(File file) {
-                        Host selectedHost = menu.getHostOnShow();
-                        if (selectedHost != null) {
-                            String expectContent = menu.getCommonContent() + form.getContent();
-                            try {
-                                try {
-                                    FileSystem.os().changeHost(file, expectContent);
-                                    menu.changeSystemHost(expectContent);
-                                    selectedHost.setContent(form.getContent());
-                                    if(notOnlineHost(selectedHost)){
-                                        helper.save(selectedHost);
-                                    }
-                                } catch (InCorrectPasswordException e) {
-                                    form.showInCorrectPassword();
-                                }
-
-                            } catch (IOException e1) {
-                                showErrorMsg(e1.getMessage());
-                            }
-                        }
-                    }
-                });
+                .subscribe(changeHostOnSubscriber);
     }
+
+    private Subscriber<File> changeHostOnSubscriber = new Subscriber<File>() {
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onNext(File file) {
+            Host selectedHost = menu.getHostOnShow();
+            if (selectedHost != null) {
+                String expectContent = menu.getCommonContent() + form.getContent();
+                try {
+                    try {
+                        FileSystem.os().changeHost(file, expectContent);
+                        menu.changeSystemHost(expectContent);
+                        selectedHost.setContent(form.getContent());
+                        if (notOnlineHost(selectedHost)) {
+                            helper.save(selectedHost);
+                        }
+                    } catch (InCorrectPasswordException e) {
+                        form.showInCorrectPassword();
+                    }
+
+                } catch (IOException e1) {
+                    showErrorMsg(e1.getMessage());
+                }
+            }
+        }
+    };
 
     private boolean notOnlineHost(Host selectedHost) {
         return !"online".equals(selectedHost.getType());
@@ -181,7 +200,7 @@ public class MainFormPresenter {
         }
     }
 
-    public void addHost(String name){
+    public void addHost(String name) {
         menu.updateHost(Host.local(name));
         tray.updateTray(name);
     }
@@ -202,5 +221,16 @@ public class MainFormPresenter {
 
     public void showErrorMsg(String msg) {
         form.showErrorMsg(msg);
+    }
+
+    public void destroy() {
+        helper.destroy();
+        if (!changeHostOnSubscriber.isUnsubscribed()) {
+            changeHostOnSubscriber.unsubscribe();
+        }
+        if (!updateHostOnSubscriber.isUnsubscribed()) {
+            updateHostOnSubscriber.unsubscribe();
+        }
+        System.out.println("销毁所有subscriber");
     }
 }

@@ -43,7 +43,7 @@ public class DbUtil {
                             }
                         });
                     }
-                }).subscribeOn(Schedulers.io())
+                }).subscribeOn(Schedulers.newThread())
                 .subscribe();
     }
 

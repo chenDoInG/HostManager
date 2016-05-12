@@ -8,6 +8,8 @@ import rx.functions.Action1;
 
 import javax.inject.Inject;
 import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class MainForm {
     private JFrame frame;
@@ -38,7 +40,7 @@ public class MainForm {
                 .subscribe(new Action1<Void>() {
                     @Override
                     public void call(Void aVoid) {
-                       presenter.saveHost();
+                        presenter.saveHost();
                     }
                 });
         RxButton.click(btn_add)
@@ -63,6 +65,13 @@ public class MainForm {
                         presenter.activeHost();
                     }
                 });
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                presenter.destroy();
+            }
+        });
     }
 
     private void createUIComponents() {
@@ -88,7 +97,7 @@ public class MainForm {
         hostContent.setCaretPosition(0);
     }
 
-    public String getContent(){
+    public String getContent() {
         return hostContent.getText();
     }
 
@@ -100,7 +109,7 @@ public class MainForm {
         JOptionPane.showMessageDialog(frame, errorMsg);
     }
 
-    public void showInCorrectPassword(){
+    public void showInCorrectPassword() {
         JOptionPane.showMessageDialog(frame, "您输入的密码错误,请重新尝试", "密码提示", JOptionPane.ERROR_MESSAGE);
     }
 }

@@ -53,18 +53,36 @@ public class HostHelper {
                         subscriber.onCompleted();
                     }
                 }))
-                .subscribeOn(Schedulers.io())
-                .subscribe(new Action1<Host>() {
-                    @Override
-                    public void call(Host usingHost) {
-                        db.execute(new Condition()
-                                .update().set()
-                                .content(StringUtils.isEmpty(host.getContent()) ? "" : host.getContent())
-                                .where()
-                                .name(usingHost.getName()).build());
-                    }
-                });
+                .subscribeOn(Schedulers.newThread())
+                .subscribe(updateHostOnSubscriber);
     }
+
+    public void destroy(){
+        if(!updateHostOnSubscriber.isUnsubscribed()){
+            updateHostOnSubscriber.unsubscribe();
+        }
+    }
+
+    private Subscriber<Host> updateHostOnSubscriber = new Subscriber<Host>() {
+        @Override
+        public void onCompleted() {
+
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onNext(Host host) {
+            db.execute(new Condition()
+                    .update().set()
+                    .content(StringUtils.isEmpty(host.getContent()) ? "" : host.getContent())
+                    .where()
+                    .name(host.getName()).build());
+        }
+    };
 
     public static class Condition {
         private static final StringBuilder DELETE = new StringBuilder("DELETE FROM host ");
@@ -185,5 +203,4 @@ public class HostHelper {
             sql = new StringBuilder();
         }
     }
-
 }
